@@ -1,0 +1,55 @@
+# Xcode
+DerivedData/
+*.xcworkspace
+*.xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# SwiftPM
+.build/
+.swiftpm/xcode/
+
+# Swift Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+
+# Archives
+*.xcarchive
+
+# Firebase
+GoogleService-Info.plist
+
+# Environment
+.env
+
+# macOS
+.DS_Store
+
+# Bundler
+.bundle/
+
+# SPM checkouts
+Package.resolved
+
+# Xcode Preview
+*.icloud
+
+# User settings
+*.orig
