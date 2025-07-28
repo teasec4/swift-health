@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var healthKitManager: HealthKitManager
     @ObservedObject var waterIntakeManager: WaterIntakeManager
+    @ObservedObject var notificationManager = NotificationManager.shared
     
     @State private var selectedStepGoal: Int
     @State private var selectedWaterGoal: Int
@@ -36,6 +37,17 @@ struct SettingsView: View {
                             waterIntakeManager.setWaterGoal(Double(newGoal))
                         }
                     )
+                    
+                    // Настройки уведомления
+//                    Toggle(isOn: $notificationManager.notificationsEnabled){
+//                        Text("Enable Smart Reminders")
+//                            .font(.headline)
+//                    }
+//                    .padding()
+//                    .background(.ultraThinMaterial)
+//                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    NotificationSettingsCard()
+                    
                 }
                 .padding()
             }

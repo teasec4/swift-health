@@ -4,6 +4,7 @@ struct ContentView: View {
     
     @StateObject private var healthKitManager = HealthKitManager()
     @StateObject private var waterIntakeManager = WaterIntakeManager()
+    @ObservedObject var notificationManager = NotificationManager.shared
     
     var body: some View {
         NavigationView{
@@ -26,7 +27,13 @@ struct ContentView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear {
-                    healthKitManager.requestAuthorization()
+            healthKitManager.requestAuthorization()
+            notificationManager.scheduleSmartReminders(
+                steps: healthKitManager.steps,
+                stepGoal: healthKitManager.stepGoal,
+                water: waterIntakeManager.waterIntake,
+                waterGoal: waterIntakeManager.waterGoal
+            )
                 }
     }
 }
