@@ -38,14 +38,6 @@ struct SettingsView: View {
                         }
                     )
                     
-                    // Настройки уведомления
-//                    Toggle(isOn: $notificationManager.notificationsEnabled){
-//                        Text("Enable Smart Reminders")
-//                            .font(.headline)
-//                    }
-//                    .padding()
-//                    .background(.ultraThinMaterial)
-//                    .clipShape(RoundedRectangle(cornerRadius: 16))
                     NotificationSettingsCard()
                     
                 }

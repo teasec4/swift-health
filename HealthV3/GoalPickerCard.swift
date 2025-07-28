@@ -29,6 +29,6 @@ struct GoalPickerCard: View {
         .padding()
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(radius: 2)
+//        .shadow(radius: 2)
     }
 }

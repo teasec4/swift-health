@@ -59,7 +59,7 @@ struct WaterIntakeView: View {
                             RoundedRectangle(cornerRadius: 16)
                                 .fill(.cyan)
                         )
-                        .shadow(radius: 2)
+//                        .shadow(radius: 2)
                         .scaleEffect(buttonPressed ? 0.94 : 1.0)
                     }
                     .buttonStyle(PlainButtonStyle())
