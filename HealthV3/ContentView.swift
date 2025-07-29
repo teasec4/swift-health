@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     
-    @StateObject private var healthKitManager = HealthKitManager()
+    @StateObject private var healthKitManager = HealthKitManager(waterIntakeManager: WaterIntakeManager())
     @StateObject private var waterIntakeManager = WaterIntakeManager()
     @ObservedObject var notificationManager = NotificationManager.shared
     

@@ -1,14 +1,35 @@
 import HealthKit
+import Combine
 
 class HealthKitManager: ObservableObject {
     private let healthStore = HKHealthStore()
-    
     @Published var steps: Double = 0
     @Published var calories: Double = 0
     @Published var stepGoal: Double = UserDefaults.standard.double(forKey: "stepGoal") > 0 ? UserDefaults.standard.double(forKey: "stepGoal") : 10000
+    private var cancellables = Set<AnyCancellable>()
+    
+    init(waterIntakeManager: WaterIntakeManager? = nil) {
+        // Подписываемся на изменения steps и calories для обновления уведомлений
+        Publishers.CombineLatest($steps, $calories)
+            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
+            .sink { [weak self] newSteps, newCalories in
+                guard let self = self else { return }
+                print("Steps or calories updated: steps = \(newSteps), calories = \(newCalories)")
+                NotificationManager.shared.scheduleAllNotifications(
+                    steps: newSteps,
+                    stepGoal: self.stepGoal,
+                    water: waterIntakeManager?.waterIntake ?? 0.0, // Используем переданный WaterIntakeManager
+                    waterGoal: waterIntakeManager?.waterGoal ?? 2000.0
+                )
+            }
+            .store(in: &cancellables)
+    }
     
     func requestAuthorization() {
-        guard HKHealthStore.isHealthDataAvailable() else { return }
+        guard HKHealthStore.isHealthDataAvailable() else {
+            print("HealthKit is not available on this device")
+            return
+        }
         
         let readTypes: Set<HKObjectType> = [
             HKObjectType.quantityType(forIdentifier: .stepCount)!,
@@ -17,8 +38,10 @@ class HealthKitManager: ObservableObject {
         
         healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
             if success {
+                print("HealthKit authorization granted")
                 self.fetchSteps()
                 self.fetchCalories()
+                self.startMonitoringStepsAndCalories()
             } else if let error = error {
                 print("HealthKit authorization error: \(error.localizedDescription)")
             }
@@ -35,10 +58,14 @@ class HealthKitManager: ObservableObject {
         let query = HKStatisticsQuery(quantityType: stepType, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
             guard let result = result, let sum = result.sumQuantity() else {
                 print("Error fetching steps: \(error?.localizedDescription ?? "No data")")
+                DispatchQueue.main.async {
+                    self.steps = 0.0
+                }
                 return
             }
             DispatchQueue.main.async {
                 self.steps = sum.doubleValue(for: HKUnit.count())
+                print("Fetched steps: \(self.steps)")
             }
         }
         healthStore.execute(query)
@@ -54,17 +81,74 @@ class HealthKitManager: ObservableObject {
         let query = HKStatisticsQuery(quantityType: calorieType, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
             guard let result = result, let sum = result.sumQuantity() else {
                 print("Error fetching calories: \(error?.localizedDescription ?? "No data")")
+                DispatchQueue.main.async {
+                    self.calories = 0.0
+                }
                 return
             }
             DispatchQueue.main.async {
                 self.calories = sum.doubleValue(for: HKUnit.kilocalorie())
+                print("Fetched calories: \(self.calories)")
             }
         }
         healthStore.execute(query)
     }
     
+    func startMonitoringStepsAndCalories() {
+        guard let stepType = HKObjectType.quantityType(forIdentifier: .stepCount),
+              let calorieType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else {
+            print("Step or calorie type is not available")
+            return
+        }
+        
+        // Мониторинг шагов
+        let stepsQuery = HKObserverQuery(sampleType: stepType, predicate: nil) { [weak self] query, completionHandler, error in
+            if let error = error {
+                print("Steps observer query error: \(error.localizedDescription)")
+                return
+            }
+            
+            print("Steps data updated, fetching new data")
+            self?.fetchSteps()
+            completionHandler()
+        }
+        
+        // Мониторинг калорий
+        let caloriesQuery = HKObserverQuery(sampleType: calorieType, predicate: nil) { [weak self] query, completionHandler, error in
+            if let error = error {
+                print("Calories observer query error: \(error.localizedDescription)")
+                return
+            }
+            
+            print("Calories data updated, fetching new data")
+            self?.fetchCalories()
+            completionHandler()
+        }
+        
+        healthStore.execute(stepsQuery)
+        healthStore.execute(caloriesQuery)
+        
+        // Включение фоновой доставки
+        healthStore.enableBackgroundDelivery(for: stepType, frequency: .immediate) { success, error in
+            if success {
+                print("Background delivery enabled for steps")
+            } else if let error = error {
+                print("Failed to enable background delivery for steps: \(error.localizedDescription)")
+            }
+        }
+        
+        healthStore.enableBackgroundDelivery(for: calorieType, frequency: .immediate) { success, error in
+            if success {
+                print("Background delivery enabled for calories")
+            } else if let error = error {
+                print("Failed to enable background delivery for calories: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     func setStepGoal(_ goal: Double) {
         stepGoal = goal
         UserDefaults.standard.set(goal, forKey: "stepGoal")
+        print("Step goal set to: \(goal)")
     }
 }

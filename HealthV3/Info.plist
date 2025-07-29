@@ -2,9 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>Health Share Usage Description</key>
-	<string>Мы используем данные о шагах для отслеживания вашей активности</string>
-	<key>Health Update Usage Description</key>
-	<string>Мы сохраняем данные о вашей активности для статистики</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>processing</string>
+	</array>
 </dict>
 </plist>

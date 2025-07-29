@@ -264,7 +264,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HealthV3/Info.plist;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Мы используем данные о шагах для отслеживания вашей активности";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Мы сохраняем данные о вашей активности для статистики";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need access to your HealthKit data to track your steps and calories.";
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "We use notifications to help you stay healthy";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -297,7 +297,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HealthV3/Info.plist;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Мы используем данные о шагах для отслеживания вашей активности";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Мы сохраняем данные о вашей активности для статистики";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need access to your HealthKit data to track your steps and calories.";
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "We use notifications to help you stay healthy";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
