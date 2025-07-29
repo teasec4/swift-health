@@ -2,7 +2,9 @@ import SwiftUI
 import SwiftData
 
 struct NotificationSettingsCard: View {
-    @ObservedObject var notificationManager = NotificationManager.shared
+    @ObservedObject var notificationManager: NotificationManager
+    @ObservedObject var healthKitManager: HealthKitManager
+    @ObservedObject var waterIntakeManager: WaterIntakeManager
     @State private var showPermissionAlert = false
     @State private var isCheckingPermissions = false
 
@@ -10,16 +12,28 @@ struct NotificationSettingsCard: View {
         VStack(alignment: .leading) {
             Toggle("Enable Smart Reminders", isOn: $notificationManager.notificationsEnabled)
                 .onChange(of: notificationManager.notificationsEnabled) { newValue in
+                    print("Toggle changed to: \(newValue)") // Отладка
                     if newValue {
+                        isCheckingPermissions = true
                         UNUserNotificationCenter.current().getNotificationSettings { settings in
-                            DispatchQueue.main.async {
-                                if settings.authorizationStatus != .authorized {
-                                    showPermissionAlert = true
-                                    notificationManager.notificationsEnabled = false
-                                }
-                                isCheckingPermissions = false
+                        DispatchQueue.main.async {
+                            if settings.authorizationStatus != .authorized {
+                                showPermissionAlert = true
+                                notificationManager.notificationsEnabled = false
+                            } else {
+                                notificationManager.scheduleAllNotifications(
+                                    steps: healthKitManager.steps,
+                                    stepGoal: healthKitManager.stepGoal,
+                                    water: waterIntakeManager.waterIntake,
+                                    waterGoal: waterIntakeManager.waterGoal
+                                )
+                             }
+                            isCheckingPermissions = false
                             }
                         }
+                    } else {
+                        print("Disabling notifications") // Отладка
+                        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
                     }
                 }
             if isCheckingPermissions{
@@ -38,17 +52,14 @@ struct NotificationSettingsCard: View {
             .foregroundColor(.blue)
             
             if notificationManager.notificationsEnabled {
-                                HStack(spacing: 16){
-                                    Text("Notification Frequency: ")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                HStack(spacing: 16){
+                    Text("Notification Frequency: ")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                                     
-                                    Picker("Notification Frequency", selection: $notificationManager.notificationMode) {
-                                        Text("Rare").tag(NotificationManager.NotificationMode.rare)
-                                        Text("Frequent").tag(NotificationManager.NotificationMode.frequent)
-                                    }
-                                    .pickerStyle(SegmentedPickerStyle())
-                                }
+                NotificationModePicker(selectedMode: $notificationManager.mode)
+                                        
+                }
             }
         }
         .padding()
@@ -62,6 +73,18 @@ struct NotificationSettingsCard: View {
         } message: {
             Text("Please enable notifications in Settings to use Smart Reminders.")
         }
+        
+        .onChange(of: notificationManager.mode) { newMode in
+                    print("NotificationSettingsCard: Mode changed to \(newMode.rawValue)")
+                    notificationManager.scheduleAllNotifications(
+                        steps: healthKitManager.steps,
+                        stepGoal: healthKitManager.stepGoal,
+                        water: waterIntakeManager.waterIntake,
+                        waterGoal: waterIntakeManager.waterGoal
+                    )
+                }
+        
+    
     }
 }
 

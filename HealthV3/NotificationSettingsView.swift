@@ -1,23 +1,27 @@
 import SwiftUI
 
-struct SettingsView: View {
+struct NotificationSettingsView: View {
     @ObservedObject var healthKitManager: HealthKitManager
     @ObservedObject var waterIntakeManager: WaterIntakeManager
-    @ObservedObject var notificationManager = NotificationManager.shared
     
+
     @State private var selectedStepGoal: Int
     @State private var selectedWaterGoal: Int
-    
+
+    @Environment(\.dismiss) private var dismiss
+
     init(healthKitManager: HealthKitManager, waterIntakeManager: WaterIntakeManager) {
-            self.healthKitManager = healthKitManager
-            self.waterIntakeManager = waterIntakeManager
-            _selectedStepGoal = State(initialValue: Int(healthKitManager.stepGoal))
-            _selectedWaterGoal = State(initialValue: Int(waterIntakeManager.waterGoal))
-        }
+        self.healthKitManager = healthKitManager
+        self.waterIntakeManager = waterIntakeManager
+        _selectedStepGoal = State(initialValue: Int(healthKitManager.stepGoal))
+        _selectedWaterGoal = State(initialValue: Int(waterIntakeManager.waterGoal))
+    }
 
     var body: some View {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 32) {
+                    // Step Goal Picker
                     GoalPickerCard(
                         title: "Step Goal",
                         currentValue: "\(Int(healthKitManager.stepGoal)) steps",
@@ -28,6 +32,7 @@ struct SettingsView: View {
                         }
                     )
 
+                    // Water Goal Picker
                     GoalPickerCard(
                         title: "Water Goal",
                         currentValue: "\(Int(waterIntakeManager.waterGoal)) ml",
@@ -37,17 +42,33 @@ struct SettingsView: View {
                             waterIntakeManager.setWaterGoal(Double(newGoal))
                         }
                     )
-                    
-                    NotificationSettingsCard()
-                    
+
+                    // Notification Settings
+                    NotificationSettingsCard(
+                        notificationManager: NotificationManager.shared,
+                        healthKitManager: healthKitManager,
+                        waterIntakeManager: waterIntakeManager)
                 }
                 .padding()
             }
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        // Save goals explicitly (already saved on set)
+                        dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
         }
     }
-
-
-#Preview {
-    ContentView()
 }
-

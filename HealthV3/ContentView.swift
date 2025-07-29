@@ -5,9 +5,11 @@ struct ContentView: View {
     @StateObject private var healthKitManager = HealthKitManager()
     @StateObject private var waterIntakeManager = WaterIntakeManager()
     @ObservedObject var notificationManager = NotificationManager.shared
+    
+    @State private var showSettings = false
         
     var body: some View {
-        NavigationView{
+        NavigationStack{
             TabView{
                 ActivityView(healthKitManager: healthKitManager)
                     .tabItem {
@@ -19,27 +21,38 @@ struct ContentView: View {
                     .tabItem{
                         Label("Water", systemImage: "drop.fill")
                     }
-                SettingsView(healthKitManager: healthKitManager, waterIntakeManager: waterIntakeManager)
-                    .tabItem {
-                        Label("Settings", systemImage: "gear")
-                    }
                 
             }
         
             .navigationTitle("Your Health")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button {
+                                    showSettings = true
+                                } label: {
+                                    Image(systemName: "gear")
+                                }
+                            }
+                        }
+            
+            .sheet(isPresented: $showSettings) {
+                            NotificationSettingsView(
+                                healthKitManager: healthKitManager,
+                                waterIntakeManager: waterIntakeManager
+                            )
+                        }
             
         }
         
         .onAppear {
             healthKitManager.requestAuthorization()
-            notificationManager.scheduleSmartReminders(
-                steps: healthKitManager.steps,
-                stepGoal: healthKitManager.stepGoal,
-                water: waterIntakeManager.waterIntake,
-                waterGoal: waterIntakeManager.waterGoal
-            )
-
+            notificationManager.scheduleAllNotifications(
+                    steps: healthKitManager.steps,
+                    stepGoal: healthKitManager.stepGoal,
+                    water: waterIntakeManager.waterIntake,
+                    waterGoal: waterIntakeManager.waterGoal
+                )
         }
     }
 }
