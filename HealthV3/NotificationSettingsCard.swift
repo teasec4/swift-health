@@ -6,14 +6,16 @@ struct NotificationSettingsCard: View {
     @ObservedObject var waterIntakeManager: WaterIntakeManager
     @State private var showPermissionAlert = false
     @State private var isCheckingPermissions = false
+    @Binding var tempNotificationsEnabled: Bool
+    @Binding var tempMode: ReminderMode
     var onSave: () -> Void
     var onCancel: () -> Void
 
     var body: some View {
         print("NotificationSettingsCard: Rendering body")
         return VStack(alignment: .leading) {
-            Toggle("Enable Smart Reminders", isOn: $notificationManager.notificationsEnabled)
-                .onChange(of: notificationManager.notificationsEnabled) { newValue in
+            Toggle("Enable Smart Reminders", isOn: $tempNotificationsEnabled)
+                .onChange(of: tempNotificationsEnabled) { newValue in
                     print("Toggle changed to: \(newValue)")
                     if newValue {
                         isCheckingPermissions = true
@@ -21,16 +23,10 @@ struct NotificationSettingsCard: View {
                             DispatchQueue.main.async {
                                 if settings.authorizationStatus != .authorized {
                                     showPermissionAlert = true
-                                    notificationManager.notificationsEnabled = false
+                                    tempNotificationsEnabled = false
                                     self.onCancel()
                                     print("NotificationSettingsCard: onCancel triggered")
                                 } else {
-                                    notificationManager.scheduleAllNotifications(
-                                        steps: healthKitManager.steps,
-                                        stepGoal: healthKitManager.stepGoal,
-                                        water: waterIntakeManager.waterIntake,
-                                        waterGoal: waterIntakeManager.waterGoal
-                                    )
                                     self.onSave()
                                     print("NotificationSettingsCard: onSave triggered")
                                 }
@@ -39,7 +35,6 @@ struct NotificationSettingsCard: View {
                         }
                     } else {
                         print("Disabling notifications")
-                        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
                         self.onSave()
                         print("NotificationSettingsCard: onSave triggered")
                     }
@@ -59,13 +54,13 @@ struct NotificationSettingsCard: View {
             }
             .foregroundColor(.blue)
             
-            if notificationManager.notificationsEnabled {
+            if tempNotificationsEnabled {
                 HStack(spacing: 16) {
                     Text("Notification Frequency: ")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     
-                    NotificationModePicker(selectedMode: $notificationManager.mode)
+                    NotificationModePicker(selectedMode: $tempMode)
                 }
             }
         }
@@ -83,14 +78,8 @@ struct NotificationSettingsCard: View {
         } message: {
             Text("Please enable notifications in Settings to use Smart Reminders.")
         }
-        .onChange(of: notificationManager.mode) { newMode in
+        .onChange(of: tempMode) { newMode in
             print("NotificationSettingsCard: Mode changed to \(newMode.rawValue)")
-            notificationManager.scheduleAllNotifications(
-                steps: healthKitManager.steps,
-                stepGoal: healthKitManager.stepGoal,
-                water: waterIntakeManager.waterIntake,
-                waterGoal: waterIntakeManager.waterGoal
-            )
             self.onSave()
             print("NotificationSettingsCard: onSave triggered")
         }
@@ -102,6 +91,8 @@ struct NotificationSettingsCard: View {
         notificationManager: NotificationManager.shared,
         healthKitManager: HealthKitManager(),
         waterIntakeManager: WaterIntakeManager(),
+        tempNotificationsEnabled: .constant(false),
+        tempMode: .constant(.rare),
         onSave: {},
         onCancel: {}
     )
