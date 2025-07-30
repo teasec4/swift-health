@@ -12,7 +12,6 @@ class HealthKitManager: ObservableObject {
     init(waterIntakeManager: WaterIntakeManager? = nil) {
         self.waterIntakeManager = waterIntakeManager
         resetIfNewDay()
-        // Подписываемся на изменения steps и calories для обновления уведомлений
         Publishers.CombineLatest($steps, $calories)
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
             .sink { [weak self] newSteps, newCalories in
@@ -27,7 +26,6 @@ class HealthKitManager: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Подписываемся на смену дня и сброс данных
         NotificationCenter.default.addObserver(self, selector: #selector(resetIfNewDay), name: .NSCalendarDayChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleDataReset), name: .dataReset, object: nil)
     }
@@ -77,6 +75,29 @@ class HealthKitManager: ObservableObject {
             DispatchQueue.main.async {
                 self.steps = sum.doubleValue(for: HKUnit.count())
                 print("Fetched steps: \(self.steps)")
+            }
+        }
+        healthStore.execute(query)
+    }
+    
+    func fetchSteps(for date: Date, completion: @escaping (Double) -> Void) {
+        guard let stepType = HKObjectType.quantityType(forIdentifier: .stepCount) else {
+            completion(0)
+            return
+        }
+        
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+        
+        let query = HKStatisticsQuery(quantityType: stepType, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
+            guard let result = result, let sum = result.sumQuantity() else {
+                print("Error fetching steps for \(date): \(error?.localizedDescription ?? "No data")")
+                completion(0)
+                return
+            }
+            DispatchQueue.main.async {
+                completion(sum.doubleValue(for: HKUnit.count()))
             }
         }
         healthStore.execute(query)

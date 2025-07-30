@@ -2,18 +2,21 @@ import SwiftUI
 
 struct ContentView: View {
     
-    @StateObject private var healthKitManager = HealthKitManager(waterIntakeManager: WaterIntakeManager())
     @StateObject private var waterIntakeManager = WaterIntakeManager()
+    @StateObject private var healthKitManager: HealthKitManager
     @ObservedObject var notificationManager = NotificationManager.shared
     @State private var showSettings = false
+    @State private var showCalendar = false
     @State private var showWelcome = false
     
-    init() {
-            let waterIntakeManager = WaterIntakeManager()
-            _waterIntakeManager = StateObject(wrappedValue: waterIntakeManager)
-            _healthKitManager = StateObject(wrappedValue: HealthKitManager(waterIntakeManager: waterIntakeManager))
-        }
-        
+    // Публичный инициализатор для #Preview
+    public init() {
+        let waterIntakeManager = WaterIntakeManager()
+        self._waterIntakeManager = StateObject(wrappedValue: waterIntakeManager)
+        self._healthKitManager = StateObject(wrappedValue: HealthKitManager(waterIntakeManager: waterIntakeManager))
+    }
+    
+    
     var body: some View {
         NavigationStack{
             TabView{
@@ -37,14 +40,28 @@ struct ContentView: View {
                         } label: {
                             Image(systemName: "gear")
                                 }
-                        }
                     }
+                ToolbarItem(placement:.navigationBarLeading){
+                    Button{
+                        showCalendar = true
+                    } label: {
+                        Image(systemName: "calendar")
+                    }
+                }
+                }
             
             .sheet(isPresented: $showSettings) {
                     NotificationSettingsView(
                                 healthKitManager: healthKitManager,
                                 waterIntakeManager: waterIntakeManager
                             )
+            }
+            .sheet(isPresented: $showCalendar) {
+                    CalendarView(
+                        healthKitManager: healthKitManager, waterIntakeManager: waterIntakeManager
+                    )
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
             }
             
             .sheet(isPresented: $showWelcome, onDismiss: {
