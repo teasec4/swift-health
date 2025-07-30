@@ -7,8 +7,11 @@ class HealthKitManager: ObservableObject {
     @Published var calories: Double = 0
     @Published var stepGoal: Double = UserDefaults.standard.double(forKey: "stepGoal") > 0 ? UserDefaults.standard.double(forKey: "stepGoal") : 10000
     private var cancellables = Set<AnyCancellable>()
+    private weak var waterIntakeManager: WaterIntakeManager?
     
     init(waterIntakeManager: WaterIntakeManager? = nil) {
+        self.waterIntakeManager = waterIntakeManager
+        resetIfNewDay()
         // Подписываемся на изменения steps и calories для обновления уведомлений
         Publishers.CombineLatest($steps, $calories)
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
@@ -18,11 +21,19 @@ class HealthKitManager: ObservableObject {
                 NotificationManager.shared.scheduleAllNotifications(
                     steps: newSteps,
                     stepGoal: self.stepGoal,
-                    water: waterIntakeManager?.waterIntake ?? 0.0, // Используем переданный WaterIntakeManager
-                    waterGoal: waterIntakeManager?.waterGoal ?? 2000.0
+                    water: self.waterIntakeManager?.waterIntake ?? 0.0,
+                    waterGoal: self.waterIntakeManager?.waterGoal ?? 2000.0
                 )
             }
             .store(in: &cancellables)
+        
+        // Подписываемся на смену дня и сброс данных
+        NotificationCenter.default.addObserver(self, selector: #selector(resetIfNewDay), name: .NSCalendarDayChanged, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleDataReset), name: .dataReset, object: nil)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     func requestAuthorization() {
@@ -101,7 +112,6 @@ class HealthKitManager: ObservableObject {
             return
         }
         
-        // Мониторинг шагов
         let stepsQuery = HKObserverQuery(sampleType: stepType, predicate: nil) { [weak self] query, completionHandler, error in
             if let error = error {
                 print("Steps observer query error: \(error.localizedDescription)")
@@ -113,7 +123,6 @@ class HealthKitManager: ObservableObject {
             completionHandler()
         }
         
-        // Мониторинг калорий
         let caloriesQuery = HKObserverQuery(sampleType: calorieType, predicate: nil) { [weak self] query, completionHandler, error in
             if let error = error {
                 print("Calories observer query error: \(error.localizedDescription)")
@@ -128,7 +137,6 @@ class HealthKitManager: ObservableObject {
         healthStore.execute(stepsQuery)
         healthStore.execute(caloriesQuery)
         
-        // Включение фоновой доставки
         healthStore.enableBackgroundDelivery(for: stepType, frequency: .immediate) { success, error in
             if success {
                 print("Background delivery enabled for steps")
@@ -150,5 +158,29 @@ class HealthKitManager: ObservableObject {
         stepGoal = goal
         UserDefaults.standard.set(goal, forKey: "stepGoal")
         print("Step goal set to: \(goal)")
+    }
+    
+    @objc func resetIfNewDay() {
+        let lastUpdateDate = UserDefaults.standard.object(forKey: "lastUpdateDate") as? Date ?? Date.distantPast
+        let now = Date()
+        let calendar = Calendar.current
+        if !calendar.isDateInToday(lastUpdateDate) {
+            print("Resetting calories for new day")
+            calories = 0.0
+            UserDefaults.standard.set(now, forKey: "lastUpdateDate")
+            NotificationCenter.default.post(name: .dataReset, object: nil)
+        }
+    }
+    
+    @objc func handleDataReset() {
+        print("HealthKitManager: Handling data reset")
+        fetchSteps()
+        fetchCalories()
+        NotificationManager.shared.scheduleAllNotifications(
+            steps: steps,
+            stepGoal: stepGoal,
+            water: waterIntakeManager?.waterIntake ?? 0.0,
+            waterGoal: waterIntakeManager?.waterGoal ?? 2000.0
+        )
     }
 }
