@@ -47,21 +47,24 @@ struct CalendarView: View {
                         }
                         Text(
                             String(
-                                format: NSLocalizedString("%d/%d", comment: ""),
-                                Int(steps),
-                                Int(healthKitManager.stepGoal)
+                                format: NSLocalizedString("%d", comment: ""),
+                                Int(steps)
+
                             )
+
                         )
-                        .font(.subheadline)
+                        .font(.system(.subheadline, design: .monospaced))
                         .foregroundColor(.primary)
                         .padding(.leading, 24)
+                        .fixedSize()
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 12)
                     .background(Color.red.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .frame(width: 160)
 
-                    Spacer()
+                    //                    Spacer()
 
                     VStack(alignment: .leading, spacing: 5) {
                         HStack {
@@ -74,23 +77,25 @@ struct CalendarView: View {
                         Text(
                             String(
                                 format: NSLocalizedString(
-                                    "%d/%d ml",
+                                    "%d",
                                     comment: ""
                                 ),
                                 Int(water),
-                                Int(waterIntakeManager.waterGoal)
                             )
                         )
-                        .font(.subheadline)
+                        .font(.system(.subheadline, design: .monospaced))
                         .foregroundColor(.primary)
                         .padding(.leading, 24)
+                        .fixedSize()
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 12)
                     .background(Color.cyan.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .frame(width: 160)
                 }
                 .padding(.horizontal)
+                .frame(width: 160)
             }
             .navigationTitle("Calendar")
             .navigationBarTitleDisplayMode(.inline)
