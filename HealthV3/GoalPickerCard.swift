@@ -15,6 +15,7 @@ struct GoalPickerCard: View {
             Text("Current: \(currentValue)")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                
 
             Picker("Select", selection: $selectedValue) {
                 ForEach(range, id: \.self) { value in

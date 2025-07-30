@@ -5,9 +5,9 @@ struct ContentView: View {
     @StateObject private var waterIntakeManager = WaterIntakeManager()
     @StateObject private var healthKitManager: HealthKitManager
     @ObservedObject var notificationManager = NotificationManager.shared
-    @State private var showSettings = false
-    @State private var showCalendar = false
     @State private var showWelcome = false
+
+    @State private var activeFullScreen: ActiveFullScreen?
 
     // Публичный инициализатор для #Preview
     public init() {
@@ -22,47 +22,68 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            VStack {
-                Spacer()
-                ActivityView(healthKitManager: healthKitManager)
-                Spacer()
-                WaterIntakeView(waterIntakeManager: waterIntakeManager)
-    
-                Spacer()
+            ZStack {
+                VStack(spacing:10){
+                    Spacer().frame(height: 20) // Отступ сверху для предотвращения прилипания
+                    ActivityView(healthKitManager: healthKitManager)
+                        
+                    
+                    WaterIntakeView(waterIntakeManager: waterIntakeManager)
+                       
+                    
+                }
+                .padding(.horizontal)
+                
             }
             .navigationTitle("Your Health")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        showSettings = true
+                        activeFullScreen = .settings
                     } label: {
                         Image(systemName: "gear")
                     }
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
-                        showCalendar = true
+                        activeFullScreen = .calendar
                     } label: {
                         Image(systemName: "calendar")
                     }
                 }
             }
+            .fullScreenCover(item: $activeFullScreen) { item in
+                    switch item {
+                    case .settings:
+                        NotificationSettingsView(
+                            healthKitManager: healthKitManager,
+                            waterIntakeManager: waterIntakeManager
+                        )
+                    case .calendar:
+                        CalendarView(
+                            healthKitManager: healthKitManager,
+                            waterIntakeManager: waterIntakeManager
+                        )
+                        .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
+                    }
+                }
 
-            .sheet(isPresented: $showSettings) {
-                NotificationSettingsView(
-                    healthKitManager: healthKitManager,
-                    waterIntakeManager: waterIntakeManager
-                )
-            }
-            .sheet(isPresented: $showCalendar) {
-                CalendarView(
-                    healthKitManager: healthKitManager,
-                    waterIntakeManager: waterIntakeManager
-                )
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-            }
+            //            .sheet(isPresented: $showSettings) {
+            //                NotificationSettingsView(
+            //                    healthKitManager: healthKitManager,
+            //                    waterIntakeManager: waterIntakeManager
+            //                )
+            //            }
+            //            .sheet(isPresented: $showCalendar) {
+            //                CalendarView(
+            //                    healthKitManager: healthKitManager,
+            //                    waterIntakeManager: waterIntakeManager
+            //                )
+            //                .presentationDetents([.large])
+            //                .presentationDragIndicator(.visible)
+            //            }
 
             .sheet(
                 isPresented: $showWelcome,
@@ -104,6 +125,11 @@ struct ContentView: View {
             )
         }
     }
+}
+
+enum ActiveFullScreen: Int, Identifiable {
+    case settings, calendar
+    var id: Int { rawValue }
 }
 
 #Preview {

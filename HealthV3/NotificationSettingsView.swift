@@ -45,6 +45,7 @@ struct NotificationSettingsView: View {
                             selectedStepGoal = newGoal
                         }
                     )
+                    .padding()
 
                     // Water Goal Picker
                     GoalPickerCard(
@@ -59,6 +60,7 @@ struct NotificationSettingsView: View {
                             selectedWaterGoal = newGoal
                         }
                     )
+                    .padding()
 
                     // Notification Settings
                     NotificationSettingsCard(
