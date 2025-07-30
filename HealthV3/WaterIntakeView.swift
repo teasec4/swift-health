@@ -7,8 +7,7 @@ struct WaterIntakeView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Spacer()
-
+            
             ZStack {
                 CircularProgressView(progress: animateAmount, color: .cyan)
                     .frame(width: 180, height: 180)
@@ -27,7 +26,6 @@ struct WaterIntakeView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-
             }
 
             HStack(spacing: 16) {

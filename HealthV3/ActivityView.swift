@@ -5,8 +5,7 @@ struct ActivityView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Spacer()
-
+            
             ZStack {
                 CircularProgressView(
                     progress: healthKitManager.steps

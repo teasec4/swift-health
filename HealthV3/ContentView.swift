@@ -22,16 +22,13 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            TabView {
+            VStack {
+                Spacer()
                 ActivityView(healthKitManager: healthKitManager)
-                    .tabItem {
-                        Label("Activity", systemImage: "figure.walk")
-                    }
-
+                Spacer()
                 WaterIntakeView(waterIntakeManager: waterIntakeManager)
-                    .tabItem {
-                        Label("Water", systemImage: "drop.fill")
-                    }
+    
+                Spacer()
             }
             .navigationTitle("Your Health")
             .navigationBarTitleDisplayMode(.inline)
