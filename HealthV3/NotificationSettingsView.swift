@@ -12,12 +12,19 @@ struct NotificationSettingsView: View {
     @State private var isShowingToast = false
     @State private var isSuccessToast = false
 
-    init(healthKitManager: HealthKitManager, waterIntakeManager: WaterIntakeManager) {
+    init(
+        healthKitManager: HealthKitManager,
+        waterIntakeManager: WaterIntakeManager
+    ) {
         self.healthKitManager = healthKitManager
         self.waterIntakeManager = waterIntakeManager
         _selectedStepGoal = State(initialValue: Int(healthKitManager.stepGoal))
-        _selectedWaterGoal = State(initialValue: Int(waterIntakeManager.waterGoal))
-        _tempNotificationsEnabled = State(initialValue: NotificationManager.shared.notificationsEnabled)
+        _selectedWaterGoal = State(
+            initialValue: Int(waterIntakeManager.waterGoal)
+        )
+        _tempNotificationsEnabled = State(
+            initialValue: NotificationManager.shared.notificationsEnabled
+        )
         _tempMode = State(initialValue: NotificationManager.shared.mode)
     }
 
@@ -29,7 +36,9 @@ struct NotificationSettingsView: View {
                     GoalPickerCard(
                         title: "Step Goal",
                         currentValue: "\(selectedStepGoal) steps",
-                        range: Array(stride(from: 1000, through: 100000, by: 500)),
+                        range: Array(
+                            stride(from: 1000, through: 100000, by: 500)
+                        ),
                         selectedValue: $selectedStepGoal,
                         onSet: { newGoal in
                             // Обновляем только временное значение
@@ -41,7 +50,9 @@ struct NotificationSettingsView: View {
                     GoalPickerCard(
                         title: "Water Goal",
                         currentValue: "\(selectedWaterGoal) ml",
-                        range: Array(stride(from: 500, through: 10000, by: 200)),
+                        range: Array(
+                            stride(from: 500, through: 10000, by: 200)
+                        ),
                         selectedValue: $selectedWaterGoal,
                         onSet: { newGoal in
                             // Обновляем только временное значение
@@ -57,18 +68,20 @@ struct NotificationSettingsView: View {
                         tempNotificationsEnabled: $tempNotificationsEnabled,
                         tempMode: $tempMode,
                         onSave: {
-                            toastMessage = "Notification settings saved successfully!"
+                            toastMessage =
+                                "Notification settings saved successfully!"
                             isShowingToast = true
                             isSuccessToast = true
                         },
                         onCancel: {
-                            toastMessage = "Notification changes were not saved."
+                            toastMessage =
+                                "Notification changes were not saved."
                             isShowingToast = true
                             isSuccessToast = false
                         }
                     )
                     .padding()
-                    
+
                     Spacer()
                 }
 
@@ -77,20 +90,32 @@ struct NotificationSettingsView: View {
                     VStack {
                         Spacer()
                         HStack {
-                            Image(systemName: isSuccessToast ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundColor(.white)
+                            Image(
+                                systemName: isSuccessToast
+                                    ? "checkmark.circle.fill"
+                                    : "xmark.circle.fill"
+                            )
+                            .foregroundColor(.white)
                             Text(toastMessage ?? "")
                                 .font(.subheadline)
                                 .foregroundColor(.white)
                         }
                         .padding()
-                        .background(isSuccessToast ? Color.green.opacity(0.8) : Color.red.opacity(0.8))
+                        .background(
+                            isSuccessToast
+                                ? Color.green.opacity(0.8)
+                                : Color.red.opacity(0.8)
+                        )
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         .shadow(radius: 5)
                         .padding(.bottom, 20)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .transition(
+                            .move(edge: .bottom).combined(with: .opacity)
+                        )
                         .onAppear {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            DispatchQueue.main.asyncAfter(
+                                deadline: .now() + 0.5
+                            ) {
                                 withAnimation {
                                     isShowingToast = false
                                 }
@@ -117,8 +142,11 @@ struct NotificationSettingsView: View {
                     Button {
                         // Применяем изменения только при нажатии "Save"
                         healthKitManager.setStepGoal(Double(selectedStepGoal))
-                        waterIntakeManager.setWaterGoal(Double(selectedWaterGoal))
-                        NotificationManager.shared.notificationsEnabled = tempNotificationsEnabled
+                        waterIntakeManager.setWaterGoal(
+                            Double(selectedWaterGoal)
+                        )
+                        NotificationManager.shared.notificationsEnabled =
+                            tempNotificationsEnabled
                         NotificationManager.shared.mode = tempMode
                         NotificationManager.shared.scheduleAllNotifications(
                             steps: healthKitManager.steps,

@@ -11,11 +11,11 @@ struct GoalPickerCard: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("\(title)")
                 .font(.headline)
-            
+
             Text("Current: \(currentValue)")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            
+
             Picker("Select", selection: $selectedValue) {
                 ForEach(range, id: \.self) { value in
                     Text("\(value)").tag(value)
@@ -29,6 +29,6 @@ struct GoalPickerCard: View {
         .padding()
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-//        .shadow(radius: 2)
+        //        .shadow(radius: 2)
     }
 }

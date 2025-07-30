@@ -1,21 +1,26 @@
-import SwiftUI
 import AudioToolbox
+import SwiftUI
 
 struct WelcomeView: View {
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         VStack(spacing: 20) {
             Text(NSLocalizedString("Welcome to Your Health!", comment: ""))
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundColor(.blue)
-            
-            Text(NSLocalizedString("Track your steps, water intake, and stay healthy with daily reminders. Let's get started!", comment: ""))
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            
+
+            Text(
+                NSLocalizedString(
+                    "Track your steps, water intake, and stay healthy with daily reminders. Let's get started!",
+                    comment: ""
+                )
+            )
+            .font(.body)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal)
+
             Button(action: {
                 print("WelcomeView: Get Started button tapped")
                 dismiss()

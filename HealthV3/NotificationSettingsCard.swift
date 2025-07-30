@@ -19,20 +19,27 @@ struct NotificationSettingsCard: View {
                     print("Toggle changed to: \(newValue)")
                     if newValue {
                         isCheckingPermissions = true
-                        UNUserNotificationCenter.current().getNotificationSettings { settings in
-                            DispatchQueue.main.async {
-                                if settings.authorizationStatus != .authorized {
-                                    showPermissionAlert = true
-                                    tempNotificationsEnabled = false
-                                    self.onCancel()
-                                    print("NotificationSettingsCard: onCancel triggered")
-                                } else {
-                                    self.onSave()
-                                    print("NotificationSettingsCard: onSave triggered")
+                        UNUserNotificationCenter.current()
+                            .getNotificationSettings { settings in
+                                DispatchQueue.main.async {
+                                    if settings.authorizationStatus
+                                        != .authorized
+                                    {
+                                        showPermissionAlert = true
+                                        tempNotificationsEnabled = false
+                                        self.onCancel()
+                                        print(
+                                            "NotificationSettingsCard: onCancel triggered"
+                                        )
+                                    } else {
+                                        self.onSave()
+                                        print(
+                                            "NotificationSettingsCard: onSave triggered"
+                                        )
+                                    }
+                                    isCheckingPermissions = false
                                 }
-                                isCheckingPermissions = false
                             }
-                        }
                     } else {
                         print("Disabling notifications")
                         self.onSave()
@@ -53,13 +60,13 @@ struct NotificationSettingsCard: View {
                 Label("Open System Settings", systemImage: "gear")
             }
             .foregroundColor(.blue)
-            
+
             if tempNotificationsEnabled {
                 HStack(spacing: 16) {
                     Text("Notification Frequency: ")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    
+
                     NotificationModePicker(selectedMode: $tempMode)
                 }
             }
@@ -76,10 +83,14 @@ struct NotificationSettingsCard: View {
                 notificationManager.openAppSettings()
             }
         } message: {
-            Text("Please enable notifications in Settings to use Smart Reminders.")
+            Text(
+                "Please enable notifications in Settings to use Smart Reminders."
+            )
         }
         .onChange(of: tempMode) { newMode in
-            print("NotificationSettingsCard: Mode changed to \(newMode.rawValue)")
+            print(
+                "NotificationSettingsCard: Mode changed to \(newMode.rawValue)"
+            )
             self.onSave()
             print("NotificationSettingsCard: onSave triggered")
         }

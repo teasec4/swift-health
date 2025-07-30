@@ -10,6 +10,6 @@ import Foundation
 enum ReminderMode: String, CaseIterable, Identifiable, Equatable {
     case rare
     case frequent
-    
+
     var id: String { rawValue }
 }
