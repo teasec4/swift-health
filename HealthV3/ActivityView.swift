@@ -5,7 +5,6 @@ struct ActivityView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            
             ZStack {
                 CircularProgressView(
                     progress: healthKitManager.steps
@@ -17,24 +16,25 @@ struct ActivityView: View {
                 VStack {
                     Text("\(Int(healthKitManager.steps))")
                         .font(.largeTitle.bold())
-                    Text("Steps")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    
+                        Label {
+                            Text("\(Int(healthKitManager.stepGoal))")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        } icon: {
+                            Image(systemName: "trophy.fill")
+                                .font(.subheadline)
+                                .foregroundStyle(LinearGradient(
+                                    colors: [.yellow, .orange],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ))
+                        }
+                        .labelStyle(.titleAndIcon)
                 }
             }
 
-            HStack(spacing: 20) {
-                StatCard(
-                    title: "Goal",
-                    value: "\(Int(healthKitManager.stepGoal))"
-                )
-                StatCard(
-                    title: "Calories",
-                    value: "\(Int(healthKitManager.calories)) kcal"
-                )
-            }
-
-            Spacer()
+                        
         }
         .padding()
     }

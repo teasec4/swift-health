@@ -13,7 +13,8 @@ class WaterIntakeManager: ObservableObject {
             UserDefaults.standard.set(date, forKey: "lastUpdateDate")
             waterHistory[dateKey] = newIntake
             UserDefaults.standard.set(waterHistory, forKey: "waterHistory")
-            print("WaterIntakeManager: Updated intake to \(newIntake) ml (from \(oldValue))")
+            UserDefaults.standard.set(waterIntakeHistory, forKey: "waterIntakeHistory")
+            print("WaterIntakeManager: Updated intake to \(newIntake) ml (from \(oldValue)), history = \(waterIntakeHistory)")
         }
     }
     @Published var waterGoal: Double {
@@ -27,42 +28,49 @@ class WaterIntakeManager: ObservableObject {
         }
     }
     private var waterHistory: [String: Double] = [:]
+    private var waterIntakeHistory: [Double] = [] // История операций за текущий день
 
     init() {
         // Загрузка данных
         let savedWaterIntake = UserDefaults.standard.double(forKey: "waterIntake")
         let savedWaterGoal = UserDefaults.standard.double(forKey: "waterGoal")
-        let lastUpdateDate = UserDefaults.standard.object(forKey: "lastUpdateDate") as? Date
-            ?? Date.distantPast
+        let lastUpdateDate = UserDefaults.standard.object(forKey: "lastUpdateDate") as? Date ?? Date.distantPast
         let savedHistory = UserDefaults.standard.dictionary(forKey: "waterHistory") as? [String: Double] ?? [:]
+        let savedIntakeHistory = UserDefaults.standard.array(forKey: "waterIntakeHistory") as? [Double] ?? []
 
         // Проверка и очистка некорректных данных
         let isValidIntake = savedWaterIntake >= 0 && savedWaterIntake <= 10000
         let isValidGoal = savedWaterGoal >= 0 && savedWaterGoal <= 10000
         let isValidHistory = savedHistory.allSatisfy { $0.value >= 0 && $0.value <= 10000 }
+        let isValidIntakeHistory = savedIntakeHistory.allSatisfy { $0 >= 0 && $0 <= 10000 }
 
-        if !isValidIntake || !isValidGoal || !isValidHistory {
+        if !isValidIntake || !isValidGoal || !isValidHistory || !isValidIntakeHistory {
             print("WaterIntakeManager: Detected invalid data. Resetting UserDefaults.")
             UserDefaults.standard.set(0, forKey: "waterIntake")
             UserDefaults.standard.set(2000, forKey: "waterGoal")
             UserDefaults.standard.set([:], forKey: "waterHistory")
+            UserDefaults.standard.set([], forKey: "waterIntakeHistory")
             UserDefaults.standard.set(Date(), forKey: "lastUpdateDate")
             self.waterIntake = 0
             self.waterGoal = 2000
             self.waterHistory = [:]
+            self.waterIntakeHistory = []
         } else {
             self.waterGoal = savedWaterGoal > 0 ? savedWaterGoal : 2000
             self.waterIntake = Calendar.current.isDateInToday(lastUpdateDate) ? savedWaterIntake : 0
             self.waterHistory = savedHistory
+            self.waterIntakeHistory = Calendar.current.isDateInToday(lastUpdateDate) ? savedIntakeHistory : []
         }
 
-        print("WaterIntakeManager: Initialized with waterIntake = \(waterIntake), waterGoal = \(waterGoal), history = \(waterHistory)")
+        print("WaterIntakeManager: Initialized with waterIntake = \(waterIntake), waterGoal = \(waterGoal), history = \(waterHistory), intakeHistory = \(waterIntakeHistory)")
 
         if !Calendar.current.isDateInToday(lastUpdateDate) {
             print("WaterIntakeManager: Resetting waterIntake for new day")
             let dateKey = dateKey(for: Date())
             waterHistory[dateKey] = 0
+            waterIntakeHistory = []
             UserDefaults.standard.set(waterHistory, forKey: "waterHistory")
+            UserDefaults.standard.set(waterIntakeHistory, forKey: "waterIntakeHistory")
             UserDefaults.standard.set(0, forKey: "waterIntake")
             UserDefaults.standard.set(Date(), forKey: "lastUpdateDate")
             self.waterIntake = 0
@@ -82,13 +90,14 @@ class WaterIntakeManager: ObservableObject {
     }
 
     @objc func resetIfNewDay() {
-        let lastUpdateDate = UserDefaults.standard.object(forKey: "lastUpdateDate") as? Date
-            ?? Date.distantPast
+        let lastUpdateDate = UserDefaults.standard.object(forKey: "lastUpdateDate") as? Date ?? Date.distantPast
         if !Calendar.current.isDateInToday(lastUpdateDate) {
             print("WaterIntakeManager: Resetting waterIntake for new day")
             let dateKey = dateKey(for: Date())
             waterHistory[dateKey] = 0
+            waterIntakeHistory = []
             UserDefaults.standard.set(waterHistory, forKey: "waterHistory")
+            UserDefaults.standard.set(waterIntakeHistory, forKey: "waterIntakeHistory")
             UserDefaults.standard.set(0, forKey: "waterIntake")
             UserDefaults.standard.set(Date(), forKey: "lastUpdateDate")
             waterIntake = 0
@@ -99,15 +108,37 @@ class WaterIntakeManager: ObservableObject {
     func addWater(amount: Double) {
         let cappedAmount = max(-10000, min(amount, 10000)) // Ограничение: ±10000 мл
         waterIntake += cappedAmount
-        print("WaterIntakeManager: Changed intake by \(cappedAmount > 0 ? "+" : "")\(cappedAmount) ml")
+        if cappedAmount > 0 { // Сохраняем только добавления в историю
+            waterIntakeHistory.append(cappedAmount)
+        }
+        print("WaterIntakeManager: Changed intake by \(cappedAmount > 0 ? "+" : "")\(cappedAmount) ml, history = \(waterIntakeHistory)")
+    }
+
+    func undoLastWaterIntake() {
+        guard let lastAmount = waterIntakeHistory.last else {
+            print("WaterIntakeManager: No actions to undo")
+            return
+        }
+        waterIntake -= lastAmount
+        waterIntakeHistory.removeLast()
+        let dateKey = dateKey(for: Date())
+        waterHistory[dateKey] = waterIntake
+        UserDefaults.standard.set(waterIntake, forKey: "waterIntake")
+        UserDefaults.standard.set(waterHistory, forKey: "waterHistory")
+        UserDefaults.standard.set(waterIntakeHistory, forKey: "waterIntakeHistory")
+        UserDefaults.standard.set(Date(), forKey: "lastUpdateDate")
+        print("WaterIntakeManager: Undid last intake of \(lastAmount) ml, new intake = \(waterIntake) ml, history = \(waterIntakeHistory)")
     }
 
     func resetWaterIntake() {
         waterIntake = 0
+        waterIntakeHistory = []
         let dateKey = dateKey(for: Date())
         waterHistory[dateKey] = 0
         UserDefaults.standard.set(waterHistory, forKey: "waterHistory")
-        print("WaterIntakeManager: Water intake reset to 0")
+        UserDefaults.standard.set(waterIntakeHistory, forKey: "waterIntakeHistory")
+        UserDefaults.standard.set(Date(), forKey: "lastUpdateDate")
+        print("WaterIntakeManager: Water intake and history reset to 0")
         NotificationCenter.default.post(name: .dataReset, object: nil)
     }
 

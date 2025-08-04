@@ -6,6 +6,7 @@ struct ContentView: View {
     @StateObject private var healthKitManager: HealthKitManager
     @ObservedObject var notificationManager = NotificationManager.shared
     @State private var showWelcome = false
+    
 
     @State private var activeFullScreen: ActiveFullScreen?
 
@@ -28,7 +29,9 @@ struct ContentView: View {
                     ActivityView(healthKitManager: healthKitManager)
                         
                     WaterIntakeView(waterIntakeManager: waterIntakeManager)
-                       
+                    
+                    // Сalory
+                    CaloryView(healthKitManager: healthKitManager,waterIntakeManager: waterIntakeManager)
                 }
                 .padding(.horizontal)
                 
