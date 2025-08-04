@@ -8,11 +8,16 @@ struct WaterAmountControl: View {
     @State private var buttonAdd500Pressed: Bool = false
     @State private var buttonUndoPressed: Bool = false
     
+    @State private var symbolEffectTrigger: Int = 0
+    
     var body: some View {
         VStack {
             HStack{
+        
                 Image(systemName: "drop")
                     .font(.title2)
+                    
+                   
                     
                 Text("Add")
                 // Секция воды
@@ -22,6 +27,8 @@ struct WaterAmountControl: View {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                         buttonAdd100Pressed = true
                         waterIntakeManager.addWater(amount: 100)
+                        NotificationCenter.default.post(name: .waterIntakeUpdated, object: nil)
+                        symbolEffectTrigger += 1
                         buttonAdd100Pressed = false
                     }
                     print("WaterAmountControl: Added 100 ml")
@@ -45,7 +52,10 @@ struct WaterAmountControl: View {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                         buttonAdd250Pressed = true
                         waterIntakeManager.addWater(amount: 250)
+                        NotificationCenter.default.post(name: .waterIntakeUpdated, object: nil)
+                        symbolEffectTrigger += 1
                         buttonAdd250Pressed = false
+                        
                     }
                     print("WaterAmountControl: Added 250 ml")
                 }) {
@@ -97,7 +107,12 @@ struct WaterAmountControl: View {
             
         }
         .padding()
+        
     }
+}
+
+extension NSNotification.Name {
+    static let waterIntakeUpdated = NSNotification.Name("WaterIntakeUpdated")
 }
 
 #Preview {
