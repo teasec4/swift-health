@@ -2,7 +2,7 @@ import SwiftUI
 
 struct GoalPickerCard: View {
     let title: String
-    let currentValue: String
+   
     let range: [Int]
     @Binding var selectedValue: Int
     let onSet: (Int) -> Void
@@ -12,10 +12,6 @@ struct GoalPickerCard: View {
             Text("\(title)")
                 .font(.headline)
 
-            Text("Current: \(currentValue)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                
 
             Picker("Select", selection: $selectedValue) {
                 ForEach(range, id: \.self) { value in

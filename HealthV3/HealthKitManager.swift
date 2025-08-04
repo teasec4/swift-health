@@ -10,6 +10,7 @@ class HealthKitManager: ObservableObject {
         ? UserDefaults.standard.double(forKey: "stepGoal") : 10000
     private var cancellables = Set<AnyCancellable>()
     private weak var waterIntakeManager: WaterIntakeManager?
+    private var isFetchingSteps = false
 
     init(waterIntakeManager: WaterIntakeManager? = nil) {
         self.waterIntakeManager = waterIntakeManager
@@ -19,7 +20,12 @@ class HealthKitManager: ObservableObject {
             .sink { [weak self] newSteps, newCalories in
                 guard let self = self else { return }
                 print(
-                    "Steps or calories updated: steps = \(newSteps), calories = \(newCalories)"
+                    "HealthKitManager: Steps or calories updated: steps = \(newSteps), calories = \(newCalories)"
+                )
+                NotificationCenter.default.post(
+                    name: .stepsUpdated,
+                    object: nil,
+                    userInfo: ["steps": newSteps]
                 )
                 NotificationManager.shared.scheduleAllNotifications(
                     steps: newSteps,
@@ -42,15 +48,17 @@ class HealthKitManager: ObservableObject {
             name: .dataReset,
             object: nil
         )
+        print("HealthKitManager: Initialized with waterIntakeManager = \(String(describing: waterIntakeManager))")
     }
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+        print("HealthKitManager: Deinitialized")
     }
 
     func requestAuthorization() {
         guard HKHealthStore.isHealthDataAvailable() else {
-            print("HealthKit is not available on this device")
+            print("HealthKitManager: HealthKit not available on this device")
             return
         }
 
@@ -59,26 +67,29 @@ class HealthKitManager: ObservableObject {
             HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
         ]
 
-        healthStore.requestAuthorization(toShare: nil, read: readTypes) {
-            success,
-            error in
+        healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
             if success {
-                print("HealthKit authorization granted")
+                print("HealthKitManager: Authorization granted")
                 self.fetchSteps()
                 self.fetchCalories()
                 self.startMonitoringStepsAndCalories()
             } else if let error = error {
-                print(
-                    "HealthKit authorization error: \(error.localizedDescription)"
-                )
+                print("HealthKitManager: Authorization error: \(error.localizedDescription)")
             }
         }
     }
 
     func fetchSteps() {
-        guard
-            let stepType = HKObjectType.quantityType(forIdentifier: .stepCount)
-        else { return }
+        guard !isFetchingSteps else {
+            print("HealthKitManager: Already fetching steps, skipping")
+            return
+        }
+        isFetchingSteps = true
+        guard let stepType = HKObjectType.quantityType(forIdentifier: .stepCount) else {
+            print("HealthKitManager: Step count type not available")
+            isFetchingSteps = false
+            return
+        }
 
         let now = Date()
         let startOfDay = Calendar.current.startOfDay(for: now)
@@ -92,11 +103,11 @@ class HealthKitManager: ObservableObject {
             quantityType: stepType,
             quantitySamplePredicate: predicate,
             options: .cumulativeSum
-        ) { _, result, error in
+        ) { [weak self] _, result, error in
+            guard let self = self else { return }
+            defer { self.isFetchingSteps = false }
             guard let result = result, let sum = result.sumQuantity() else {
-                print(
-                    "Error fetching steps: \(error?.localizedDescription ?? "No data")"
-                )
+                print("HealthKitManager: Error fetching steps: \(error?.localizedDescription ?? "No data")")
                 DispatchQueue.main.async {
                     self.steps = 0.0
                 }
@@ -104,26 +115,21 @@ class HealthKitManager: ObservableObject {
             }
             DispatchQueue.main.async {
                 self.steps = sum.doubleValue(for: HKUnit.count())
-                print("Fetched steps: \(self.steps)")
+                print("HealthKitManager: Fetched steps: \(self.steps)")
             }
         }
         healthStore.execute(query)
     }
 
     func fetchSteps(for date: Date, completion: @escaping (Double) -> Void) {
-        guard
-            let stepType = HKObjectType.quantityType(forIdentifier: .stepCount)
-        else {
+        guard let stepType = HKObjectType.quantityType(forIdentifier: .stepCount) else {
             completion(0)
+            print("HealthKitManager: Step count type not available")
             return
         }
 
         let startOfDay = Calendar.current.startOfDay(for: date)
-        let endOfDay = Calendar.current.date(
-            byAdding: .day,
-            value: 1,
-            to: startOfDay
-        )!
+        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
         let predicate = HKQuery.predicateForSamples(
             withStart: startOfDay,
             end: endOfDay,
@@ -136,25 +142,24 @@ class HealthKitManager: ObservableObject {
             options: .cumulativeSum
         ) { _, result, error in
             guard let result = result, let sum = result.sumQuantity() else {
-                print(
-                    "Error fetching steps for \(date): \(error?.localizedDescription ?? "No data")"
-                )
+                print("HealthKitManager: Error fetching steps for \(date): \(error?.localizedDescription ?? "No data")")
                 completion(0)
                 return
             }
             DispatchQueue.main.async {
-                completion(sum.doubleValue(for: HKUnit.count()))
+                let stepCount = sum.doubleValue(for: HKUnit.count())
+                print("HealthKitManager: Fetched steps for \(date): \(stepCount)")
+                completion(stepCount)
             }
         }
         healthStore.execute(query)
     }
 
     func fetchCalories() {
-        guard
-            let calorieType = HKObjectType.quantityType(
-                forIdentifier: .activeEnergyBurned
-            )
-        else { return }
+        guard let calorieType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else {
+            print("HealthKitManager: Calorie type not available")
+            return
+        }
 
         let now = Date()
         let startOfDay = Calendar.current.startOfDay(for: now)
@@ -168,19 +173,17 @@ class HealthKitManager: ObservableObject {
             quantityType: calorieType,
             quantitySamplePredicate: predicate,
             options: .cumulativeSum
-        ) { _, result, error in
+        ) { [weak self] _, result, error in
             guard let result = result, let sum = result.sumQuantity() else {
-                print(
-                    "Error fetching calories: \(error?.localizedDescription ?? "No data")"
-                )
+                print("HealthKitManager: Error fetching calories: \(error?.localizedDescription ?? "No data")")
                 DispatchQueue.main.async {
-                    self.calories = 0.0
+                    self?.calories = 0.0
                 }
                 return
             }
             DispatchQueue.main.async {
-                self.calories = sum.doubleValue(for: HKUnit.kilocalorie())
-                print("Fetched calories: \(self.calories)")
+                self?.calories = sum.doubleValue(for: HKUnit.kilocalorie())
+                print("HealthKitManager: Fetched calories: \(self?.calories ?? 0)")
             }
         }
         healthStore.execute(query)
@@ -189,88 +192,75 @@ class HealthKitManager: ObservableObject {
     func startMonitoringStepsAndCalories() {
         guard
             let stepType = HKObjectType.quantityType(forIdentifier: .stepCount),
-            let calorieType = HKObjectType.quantityType(
-                forIdentifier: .activeEnergyBurned
-            )
+            let calorieType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)
         else {
-            print("Step or calorie type is not available")
+            print("HealthKitManager: Step or calorie type not available")
             return
         }
 
-        let stepsQuery = HKObserverQuery(sampleType: stepType, predicate: nil) {
-            [weak self] query, completionHandler, error in
+        let stepsQuery = HKObserverQuery(sampleType: stepType, predicate: nil) { [weak self] query, completionHandler, error in
+            guard let self = self else { return }
             if let error = error {
-                print(
-                    "Steps observer query error: \(error.localizedDescription)"
-                )
+                print("HealthKitManager: Steps observer query error: \(error.localizedDescription)")
+                completionHandler()
                 return
             }
-
-            print("Steps data updated, fetching new data")
-            self?.fetchSteps()
+            print("HealthKitManager: Steps data updated, fetching new data")
+            self.fetchSteps()
             completionHandler()
         }
 
-        let caloriesQuery = HKObserverQuery(
-            sampleType: calorieType,
-            predicate: nil
-        ) { [weak self] query, completionHandler, error in
+        let caloriesQuery = HKObserverQuery(sampleType: calorieType, predicate: nil) { [weak self] query, completionHandler, error in
+            guard let self = self else { return }
             if let error = error {
-                print(
-                    "Calories observer query error: \(error.localizedDescription)"
-                )
+                print("HealthKitManager: Calories observer query error: \(error.localizedDescription)")
+                completionHandler()
                 return
             }
-
-            print("Calories data updated, fetching new data")
-            self?.fetchCalories()
+            print("HealthKitManager: Calories data updated, fetching new data")
+            self.fetchCalories()
             completionHandler()
         }
 
         healthStore.execute(stepsQuery)
         healthStore.execute(caloriesQuery)
 
-        healthStore.enableBackgroundDelivery(
-            for: stepType,
-            frequency: .immediate
-        ) { success, error in
+        healthStore.enableBackgroundDelivery(for: stepType, frequency: .immediate) { success, error in
             if success {
-                print("Background delivery enabled for steps")
+                print("HealthKitManager: Background delivery enabled for steps")
             } else if let error = error {
-                print(
-                    "Failed to enable background delivery for steps: \(error.localizedDescription)"
-                )
+                print("HealthKitManager: Failed to enable background delivery for steps: \(error.localizedDescription)")
             }
         }
 
-        healthStore.enableBackgroundDelivery(
-            for: calorieType,
-            frequency: .immediate
-        ) { success, error in
+        healthStore.enableBackgroundDelivery(for: calorieType, frequency: .immediate) { success, error in
             if success {
-                print("Background delivery enabled for calories")
+                print("HealthKitManager: Background delivery enabled for calories")
             } else if let error = error {
-                print(
-                    "Failed to enable background delivery for calories: \(error.localizedDescription)"
-                )
+                print("HealthKitManager: Failed to enable background delivery for calories: \(error.localizedDescription)")
             }
         }
     }
 
     func setStepGoal(_ goal: Double) {
-        stepGoal = goal
-        UserDefaults.standard.set(goal, forKey: "stepGoal")
-        print("Step goal set to: \(goal)")
+        stepGoal = max(0, min(goal, 50000))
+        UserDefaults.standard.set(stepGoal, forKey: "stepGoal")
+        print("HealthKitManager: Step goal set to: \(stepGoal)")
+        NotificationManager.shared.scheduleAllNotifications(
+            steps: steps,
+            stepGoal: stepGoal,
+            water: waterIntakeManager?.waterIntake ?? 0.0,
+            waterGoal: waterIntakeManager?.waterGoal ?? 2000.0
+        )
     }
 
     @objc func resetIfNewDay() {
-        let lastUpdateDate =
-            UserDefaults.standard.object(forKey: "lastUpdateDate") as? Date
-            ?? Date.distantPast
+        let lastUpdateDate = UserDefaults.standard.object(forKey: "lastUpdateDate") as? Date ?? Date.distantPast
         let now = Date()
         let calendar = Calendar.current
         if !calendar.isDateInToday(lastUpdateDate) {
-            print("Resetting calories for new day")
+            print("HealthKitManager: Resetting steps and calories for new day")
+            steps = 0.0
             calories = 0.0
             UserDefaults.standard.set(now, forKey: "lastUpdateDate")
             NotificationCenter.default.post(name: .dataReset, object: nil)
@@ -281,11 +271,9 @@ class HealthKitManager: ObservableObject {
         print("HealthKitManager: Handling data reset")
         fetchSteps()
         fetchCalories()
-        NotificationManager.shared.scheduleAllNotifications(
-            steps: steps,
-            stepGoal: stepGoal,
-            water: waterIntakeManager?.waterIntake ?? 0.0,
-            waterGoal: waterIntakeManager?.waterGoal ?? 2000.0
-        )
     }
+}
+
+extension NSNotification.Name {
+    static let stepsUpdated = NSNotification.Name("StepsUpdated")
 }

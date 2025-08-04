@@ -27,10 +27,8 @@ struct ContentView: View {
                     Spacer().frame(height: 20) // Отступ сверху для предотвращения прилипания
                     ActivityView(healthKitManager: healthKitManager)
                         
-                    
                     WaterIntakeView(waterIntakeManager: waterIntakeManager)
                        
-                    
                 }
                 .padding(.horizontal)
                 

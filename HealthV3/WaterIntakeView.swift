@@ -29,7 +29,7 @@ struct WaterIntakeView: View {
                     .foregroundColor(.primary)
                     .clipped()
                     .animation(nil, value: waterIntakeManager.waterIntake)  // Отключить анимацию текста
-                    Text(NSLocalizedString("Drunk Today", comment: ""))
+                    Text(NSLocalizedString("Drank Today", comment: ""))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -47,6 +47,32 @@ struct WaterIntakeView: View {
 
                 // Пикер и кнопки
                 HStack {
+                    
+                    Button(action: {
+                        withAnimation(
+                            .spring(response: 0.3, dampingFraction: 0.6)
+                        ) {
+                            buttonRemovePressed = true
+                            waterIntakeManager.addWater(
+                                amount: -waterAmount
+                            )
+                            buttonRemovePressed = false
+                        }
+                        print("WaterIntakeView: Removed \(waterAmount) ml")
+                    }) {
+
+                        Image(systemName: "minus.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.black)
+                        
+                            
+                            
+                            
+                            
+                            .scaleEffect(buttonRemovePressed ? 0.94 : 1.0)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
                     Picker(
                         selection: $waterAmount,
                         label: Text("Amount").foregroundColor(.clear)
@@ -61,66 +87,35 @@ struct WaterIntakeView: View {
                                     Int(amount)
                                 )
                             )
+                            .font(.system(size: 14))
                             .tag(amount)
                         }
                     }
                     .pickerStyle(.wheel)
                     .frame(height: 100)  // Ограничить высоту для компактности
                     .clipped()
-
-                    VStack {
-                        Spacer()
-                        Button(action: {
-                            withAnimation(
-                                .spring(response: 0.3, dampingFraction: 0.6)
-                            ) {
-                                buttonRemovePressed = true
-                                waterIntakeManager.addWater(
-                                    amount: -waterAmount
-                                )
-                                buttonRemovePressed = false
-                            }
-                            print("WaterIntakeView: Removed \(waterAmount) ml")
-                        }) {
-
-                            Image(systemName: "minus.circle.fill")
-                                .font(.title2)
-                                .foregroundStyle(.black)
-
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(.ultraThinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .scaleEffect(buttonRemovePressed ? 0.94 : 1.0)
+                    
+                    Button(action: {
+                        withAnimation(
+                            .spring(response: 0.3, dampingFraction: 0.6)
+                        ) {
+                            buttonAddPressed = true
+                            waterIntakeManager.addWater(amount: waterAmount)
+                            buttonAddPressed = false
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        Button(action: {
-                            withAnimation(
-                                .spring(response: 0.3, dampingFraction: 0.6)
-                            ) {
-                                buttonAddPressed = true
-                                waterIntakeManager.addWater(amount: waterAmount)
-                                buttonAddPressed = false
-                            }
-                            print("WaterIntakeView: Added \(waterAmount) ml")
-                        }) {
+                        print("WaterIntakeView: Added \(waterAmount) ml")
+                    }) {
 
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title2)
-                                .foregroundStyle(.cyan)
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.cyan)
 
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(.ultraThinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .scaleEffect(buttonAddPressed ? 0.94 : 1.0)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        Spacer()
+                            
+                            
+    
+                            .scaleEffect(buttonAddPressed ? 0.94 : 1.0)
                     }
-
-                    .frame(maxWidth: .infinity)
+                    .buttonStyle(PlainButtonStyle())
 
                 }
             }

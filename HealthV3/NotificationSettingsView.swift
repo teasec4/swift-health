@@ -32,35 +32,38 @@ struct NotificationSettingsView: View {
         NavigationStack {
             ZStack {
                 VStack(spacing: 32) {
-                    // Step Goal Picker
-                    GoalPickerCard(
-                        title: "Step Goal",
-                        currentValue: "\(selectedStepGoal) steps",
-                        range: Array(
-                            stride(from: 1000, through: 100000, by: 500)
-                        ),
-                        selectedValue: $selectedStepGoal,
-                        onSet: { newGoal in
-                            // Обновляем только временное значение
-                            selectedStepGoal = newGoal
-                        }
-                    )
-                    .padding()
+                    HStack{
+                        // Step Goal Picker
+                        GoalPickerCard(
+                            title: "Step Goal",
+                            
+                            range: Array(
+                                stride(from: 1000, through: 100000, by: 500)
+                            ),
+                            selectedValue: $selectedStepGoal,
+                            onSet: { newGoal in
+                                // Обновляем только временное значение
+                                selectedStepGoal = newGoal
+                            }
+                        )
 
-                    // Water Goal Picker
-                    GoalPickerCard(
-                        title: "Water Goal",
-                        currentValue: "\(selectedWaterGoal) ml",
-                        range: Array(
-                            stride(from: 500, through: 10000, by: 200)
-                        ),
-                        selectedValue: $selectedWaterGoal,
-                        onSet: { newGoal in
-                            // Обновляем только временное значение
-                            selectedWaterGoal = newGoal
-                        }
-                    )
+                        // Water Goal Picker
+                        GoalPickerCard(
+                            title: "Water Goal",
+                            
+                            range: Array(
+                                stride(from: 500, through: 10000, by: 200)
+                            ),
+                            selectedValue: $selectedWaterGoal,
+                            onSet: { newGoal in
+                                // Обновляем только временное значение
+                                selectedWaterGoal = newGoal
+                            }
+                        )
+                        
+                    }
                     .padding()
+                    
 
                     // Notification Settings
                     NotificationSettingsCard(
