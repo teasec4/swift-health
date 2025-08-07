@@ -23,7 +23,7 @@ struct CalendarView: View {
                             
                     )
                     .padding(.horizontal)
-                    VStack (spacing: 16){
+                    HStack (spacing: 16){
                         InformView(title:"Steps", progress: healthKitManager.steps / healthKitManager.stepGoal , color:.red, goal:healthKitManager.stepGoal, type: "steps", current: steps, img:"figure.walk", height: 150)
                         
                         InformView(title:"Water", progress:waterIntakeManager.waterIntake / waterIntakeManager.waterGoal, color: .cyan, goal:waterIntakeManager.waterGoal, type: "ml", current: water, img: "drop.fill", height: 150)

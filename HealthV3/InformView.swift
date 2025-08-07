@@ -22,11 +22,11 @@ struct InformView : View {
     var body: some View {
         HStack{
             VStack(alignment: .leading){
-                HStack{
+                HStack(alignment: .firstTextBaseline, spacing: 4){
                     Image(systemName: "\(img)")
                         .font(.headline)
                     Text("\(title)")
-                        .font(.headline)
+                        .font(.subheadline)
                     
                 }
                 .foregroundStyle(color)
@@ -34,9 +34,9 @@ struct InformView : View {
                 Spacer()
                 HStack(alignment: .firstTextBaseline, spacing: 4){
                     Text("\(Int(current))")
-                        .font(.title)
-                    Text("\(type)")
                         .font(.subheadline)
+                    Text("\(type)")
+                        .font(.footnote)
                         .foregroundColor(.secondary)
                     
                 }
@@ -44,9 +44,11 @@ struct InformView : View {
             }
             Spacer()
             VStack(alignment: .trailing){
-                Text("\(Int(current)) / \(Int(goal))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(alignment: .firstTextBaseline){
+                    Text("\(Int(goal))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
                 ZStack{
                     Circle()
@@ -65,7 +67,7 @@ struct InformView : View {
                             
                     }
                 }
-                .padding(.vertical)
+                
                 
             }
             

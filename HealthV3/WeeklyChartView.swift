@@ -48,11 +48,6 @@ struct WeeklyChartView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text(NSLocalizedString("Weekly Water Intake", comment: ""))
-                .font(.title2.monospaced())
-                .foregroundStyle(.black)
-                .padding(.bottom, 8)
-            
             Chart(weeklyData) { data in
                 BarMark(
                     x: .value("Day", data.day),
@@ -63,7 +58,7 @@ struct WeeklyChartView: View {
             .chartXAxis {
                 AxisMarks(values: .automatic) { _ in
                     AxisValueLabel()
-                        .font(.caption.monospaced())
+                        .font(.caption)
                         .foregroundStyle(.black)
                 }
             }
@@ -71,7 +66,7 @@ struct WeeklyChartView: View {
                 AxisMarks(values: .automatic) { _ in
                     AxisGridLine()
                     AxisValueLabel(format: Decimal.FormatStyle.number.precision(.fractionLength(0)))
-                        .font(.caption.monospaced())
+                        .font(.caption)
                         .foregroundStyle(.black)
                 }
             }
@@ -81,12 +76,8 @@ struct WeeklyChartView: View {
             .padding(.horizontal)
             .animation(.spring(response: 0.5, dampingFraction: 0.7), value: weeklyData)
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(.white)
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        )
+    
+        
         .padding(.horizontal)
         .onAppear {
             updateWeeklyData()
