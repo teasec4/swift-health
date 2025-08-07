@@ -1,15 +1,12 @@
 import SwiftUI
 
 struct ContentView: View {
-
     @StateObject private var waterIntakeManager = WaterIntakeManager()
     @StateObject private var healthKitManager: HealthKitManager
     @ObservedObject var notificationManager = NotificationManager.shared
     @State private var showWelcome = false
+    @State private var showSettings = false
     
-
-    @State private var activeFullScreen: ActiveFullScreen?
-
     // Публичный инициализатор для #Preview
     public init() {
         let waterIntakeManager = WaterIntakeManager()
@@ -20,89 +17,62 @@ struct ContentView: View {
             )
         )
     }
-
+    
     var body: some View {
-        NavigationStack {
-            ZStack {
-                VStack(spacing:10){
-                    Spacer().frame(height: 20) // Отступ сверху для предотвращения прилипания
-                    ActivityView(healthKitManager: healthKitManager)
-                        
-                    WaterIntakeView(waterIntakeManager: waterIntakeManager)
-                    
-                    // Сalory
-                    CaloryView(healthKitManager: healthKitManager,waterIntakeManager: waterIntakeManager)
-                }
-                .padding(.horizontal)
-                
+        TabView {
+            NavigationStack{
+                ActivityView(healthKitManager: healthKitManager, waterIntakeManager:waterIntakeManager)
             }
-            .navigationTitle("Your Health")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        activeFullScreen = .settings
-                    } label: {
-                        Image(systemName: "gear")
-                    }
+                .tabItem{
+                    Label("Summary", systemImage: "heart")
                 }
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        activeFullScreen = .calendar
-                    } label: {
-                        Image(systemName: "calendar")
-                    }
-                }
+            
+            NavigationStack{
+                WaterIntakeView(waterIntakeManager: waterIntakeManager)
             }
-            .fullScreenCover(item: $activeFullScreen) { item in
-                    switch item {
-                    case .settings:
-                        NotificationSettingsView(
-                            healthKitManager: healthKitManager,
-                            waterIntakeManager: waterIntakeManager
-                        )
-                    case .calendar:
-                        CalendarView(
-                            healthKitManager: healthKitManager,
-                            waterIntakeManager: waterIntakeManager
-                        )
-                        .presentationDetents([.large])
-                        .presentationDragIndicator(.visible)
-                    }
+                .tabItem{
+                    Label("Water Intake", systemImage: "drop")
                 }
-
-            //            .sheet(isPresented: $showSettings) {
-            //                NotificationSettingsView(
-            //                    healthKitManager: healthKitManager,
-            //                    waterIntakeManager: waterIntakeManager
-            //                )
-            //            }
-            //            .sheet(isPresented: $showCalendar) {
-            //                CalendarView(
-            //                    healthKitManager: healthKitManager,
-            //                    waterIntakeManager: waterIntakeManager
-            //                )
-            //                .presentationDetents([.large])
-            //                .presentationDragIndicator(.visible)
-            //            }
-
-            .sheet(
-                isPresented: $showWelcome,
-                onDismiss: {
-                    // Устанавливаем флаг после закрытия WelcomeView
-                    UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
-                    showWelcome = false
-                    print(
-                        "ContentView: WelcomeView dismissed, set hasLaunchedBefore to true"
-                    )
-                }
-            ) {
-                WelcomeView()
-                    .transition(.opacity)
-                    .animation(.easeInOut, value: showWelcome)
+            
+            NavigationStack{
+                CalendarView(
+                    healthKitManager: healthKitManager,
+                    waterIntakeManager: waterIntakeManager
+                )
+            }
+            .tabItem{
+                Label("Calendar", systemImage: "calendar")
+            }
+            
+            NavigationStack{
+                NotificationSettingsView(
+                    healthKitManager: healthKitManager,
+                    waterIntakeManager: waterIntakeManager
+                )
+            }
+            .tabItem{
+                Label("Settings", systemImage: "gear")
             }
         }
-
+    
+        
+        .sheet(
+            isPresented: $showWelcome,
+            onDismiss: {
+                // Устанавливаем флаг после закрытия WelcomeView
+                UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+                showWelcome = false
+                print(
+                    "ContentView: WelcomeView dismissed, set hasLaunchedBefore to true"
+                )
+            }
+        ) {
+            WelcomeView()
+                .transition(.opacity)
+                .animation(.easeInOut, value: showWelcome)
+        }
+        
+        
         .onAppear {
             // Проверяем, был ли первый запуск
             let hasLaunchedBefore = UserDefaults.standard.bool(
@@ -110,7 +80,7 @@ struct ContentView: View {
             )
             print("ContentView: hasLaunchedBefore = \(hasLaunchedBefore)")
             showWelcome = !hasLaunchedBefore
-
+            
             healthKitManager.requestAuthorization()
             notificationManager.setManagers(
                 healthKitManager: healthKitManager,
@@ -128,10 +98,6 @@ struct ContentView: View {
     }
 }
 
-enum ActiveFullScreen: Int, Identifiable {
-    case settings, calendar
-    var id: Int { rawValue }
-}
 
 #Preview {
     ContentView()

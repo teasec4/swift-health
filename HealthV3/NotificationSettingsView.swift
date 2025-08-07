@@ -7,11 +7,11 @@ struct NotificationSettingsView: View {
     @State private var selectedWaterGoal: Int
     @State private var tempNotificationsEnabled: Bool
     @State private var tempMode: ReminderMode
-    @Environment(\.dismiss) private var dismiss
+    
     @State private var toastMessage: String? = nil
     @State private var isShowingToast = false
     @State private var isSuccessToast = false
-
+    
     init(
         healthKitManager: HealthKitManager,
         waterIntakeManager: WaterIntakeManager
@@ -27,69 +27,80 @@ struct NotificationSettingsView: View {
         )
         _tempMode = State(initialValue: NotificationManager.shared.mode)
     }
-
+    
     var body: some View {
         NavigationStack {
             ZStack {
-                VStack(spacing: 32) {
-                    HStack{
-                        // Step Goal Picker
-                        GoalPickerCard(
-                            title: "Step Goal",
-                            
-                            range: Array(
-                                stride(from: 1000, through: 100000, by: 500)
-                            ),
-                            selectedValue: $selectedStepGoal,
-                            onSet: { newGoal in
-                                // Обновляем только временное значение
-                                selectedStepGoal = newGoal
-                            }
-                        )
-
-                        // Water Goal Picker
-                        GoalPickerCard(
-                            title: "Water Goal",
-                            
-                            range: Array(
-                                stride(from: 500, through: 10000, by: 200)
-                            ),
-                            selectedValue: $selectedWaterGoal,
-                            onSet: { newGoal in
-                                // Обновляем только временное значение
-                                selectedWaterGoal = newGoal
-                            }
-                        )
-                        
-                    }
-                    .padding()
-                    
-
-                    // Notification Settings
-                    NotificationSettingsCard(
-                        notificationManager: NotificationManager.shared,
-                        healthKitManager: healthKitManager,
-                        waterIntakeManager: waterIntakeManager,
-                        tempNotificationsEnabled: $tempNotificationsEnabled,
-                        tempMode: $tempMode,
-                        onSave: {
-                            toastMessage =
-                                "Notification settings saved successfully!"
-                            isShowingToast = true
-                            isSuccessToast = true
-                        },
-                        onCancel: {
-                            toastMessage =
-                                "Notification changes were not saved."
-                            isShowingToast = true
-                            isSuccessToast = false
+                VStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 15){
+                        Text("Goals")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal)
+                        HStack{
+                            // Step Goal Picker
+                            GoalPickerCard(
+                                title: "Step",
+                                range: Array(
+                                    stride(from: 1000, through: 100000, by: 500)
+                                ),
+                                selectedValue: $selectedStepGoal,
+                                onSet: { newGoal in
+                                    // Обновляем только временное значение
+                                    selectedStepGoal = newGoal
+                                }
+                            )
+                            // Water Goal Picker
+                            GoalPickerCard(
+                                title: "Water",
+                                range: Array(
+                                    stride(from: 500, through: 10000, by: 200)
+                                ),
+                                selectedValue: $selectedWaterGoal,
+                                onSet: { newGoal in
+                                    // Обновляем только временное значение
+                                    selectedWaterGoal = newGoal
+                                }
+                            )
                         }
-                    )
-                    .padding()
-
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+                    
+                    
+                    VStack(alignment: .leading, spacing: 15){
+                        Text("Remainder")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal)
+                        // Notification Settings
+                        NotificationSettingsCard(
+                            notificationManager: NotificationManager.shared,
+                            healthKitManager: healthKitManager,
+                            waterIntakeManager: waterIntakeManager,
+                            tempNotificationsEnabled: $tempNotificationsEnabled,
+                            tempMode: $tempMode,
+                            onSave: {
+                                toastMessage =
+                                "Notification settings saved successfully!"
+                                isShowingToast = true
+                                isSuccessToast = true
+                            },
+                            onCancel: {
+                                toastMessage =
+                                "Notification changes were not saved."
+                                isShowingToast = true
+                                isSuccessToast = false
+                            }
+                        )
+                    }
+                    
+                    
                     Spacer()
                 }
-
+                .padding()
+                
                 // Toast pushup
                 if isShowingToast {
                     VStack {
@@ -97,8 +108,8 @@ struct NotificationSettingsView: View {
                         HStack {
                             Image(
                                 systemName: isSuccessToast
-                                    ? "checkmark.circle.fill"
-                                    : "xmark.circle.fill"
+                                ? "checkmark.circle.fill"
+                                : "xmark.circle.fill"
                             )
                             .foregroundColor(.white)
                             Text(toastMessage ?? "")
@@ -108,8 +119,8 @@ struct NotificationSettingsView: View {
                         .padding()
                         .background(
                             isSuccessToast
-                                ? Color.green.opacity(0.8)
-                                : Color.red.opacity(0.8)
+                            ? Color.green.opacity(0.8)
+                            : Color.red.opacity(0.8)
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         .shadow(radius: 5)
@@ -131,16 +142,18 @@ struct NotificationSettingsView: View {
                 }
             }
             .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        toastMessage = "Changes were not saved."
+                    Button("Reset") {
+                        selectedStepGoal = Int(healthKitManager.stepGoal)
+                        selectedWaterGoal = Int(waterIntakeManager.waterGoal)
+                        tempNotificationsEnabled = NotificationManager.shared.notificationsEnabled
+                        tempMode = NotificationManager.shared.mode
+                        
+                        toastMessage = "Changes reverted."
                         isShowingToast = true
                         isSuccessToast = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            dismiss()
-                        }
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -151,7 +164,7 @@ struct NotificationSettingsView: View {
                             Double(selectedWaterGoal)
                         )
                         NotificationManager.shared.notificationsEnabled =
-                            tempNotificationsEnabled
+                        tempNotificationsEnabled
                         NotificationManager.shared.mode = tempMode
                         NotificationManager.shared.scheduleAllNotifications(
                             steps: healthKitManager.steps,
@@ -162,9 +175,7 @@ struct NotificationSettingsView: View {
                         toastMessage = "Settings saved successfully!"
                         isShowingToast = true
                         isSuccessToast = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            dismiss()
-                        }
+                        
                     } label: {
                         Image(systemName: "checkmark")
                     }
@@ -176,8 +187,11 @@ struct NotificationSettingsView: View {
 }
 
 #Preview {
+    
+    
     NotificationSettingsView(
         healthKitManager: HealthKitManager(),
         waterIntakeManager: WaterIntakeManager()
+        
     )
 }

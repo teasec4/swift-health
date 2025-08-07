@@ -13,7 +13,7 @@ struct NotificationSettingsCard: View {
 
     var body: some View {
         print("NotificationSettingsCard: Rendering body")
-        return VStack(alignment: .leading) {
+        return VStack(alignment: .leading, spacing: 14) {
             Toggle("Enable Smart Reminders", isOn: $tempNotificationsEnabled)
                 .onChange(of: tempNotificationsEnabled) { newValue in
                     print("Toggle changed to: \(newValue)")
@@ -46,6 +46,17 @@ struct NotificationSettingsCard: View {
                         print("NotificationSettingsCard: onSave triggered")
                     }
                 }
+            
+            if tempNotificationsEnabled {
+                HStack(spacing: 16) {
+                    Text("Notification Frequency: ")
+                        .font(.subheadline)
+                        
+
+                    NotificationModePicker(selectedMode: $tempMode)
+                }
+            }
+            
             if isCheckingPermissions {
                 ProgressView()
                     .padding(.vertical, 8)
@@ -61,15 +72,7 @@ struct NotificationSettingsCard: View {
             }
             .foregroundColor(.blue)
 
-            if tempNotificationsEnabled {
-                HStack(spacing: 16) {
-                    Text("Notification Frequency: ")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    NotificationModePicker(selectedMode: $tempMode)
-                }
-            }
+            
         }
         .padding()
         .background(.ultraThinMaterial)

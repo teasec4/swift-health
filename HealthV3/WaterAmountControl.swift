@@ -13,15 +13,6 @@ struct WaterAmountControl: View {
     var body: some View {
         VStack {
             HStack{
-        
-                Image(systemName: "drop")
-                    .font(.title2)
-                    
-                   
-                    
-                Text("Add")
-                // Секция воды
-                
                 // Add 100 ml
                 Button(action: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
@@ -33,7 +24,7 @@ struct WaterAmountControl: View {
                     }
                     print("WaterAmountControl: Added 100 ml")
                 }) {
-                    Text(NSLocalizedString("100", comment: ""))
+                    Text(NSLocalizedString("100 ml", comment: ""))
                     
                         .foregroundStyle(.black)
                         .padding(.horizontal, 12)
@@ -59,7 +50,7 @@ struct WaterAmountControl: View {
                     }
                     print("WaterAmountControl: Added 250 ml")
                 }) {
-                    Text(NSLocalizedString("250", comment: ""))
+                    Text(NSLocalizedString("250 ml", comment: ""))
                     
                         .foregroundStyle(.black)
                         .padding(.horizontal, 12)
@@ -73,14 +64,6 @@ struct WaterAmountControl: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 
-            }
-            
-            HStack{
-                Image(systemName: "arrow.uturn.backward")
-                    .font(.title3)
-                    .foregroundStyle(.black)
-                
-                // Undo
                 Button(action: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                         buttonUndoPressed = true
@@ -89,7 +72,7 @@ struct WaterAmountControl: View {
                     }
                     print("WaterAmountControl: Undo last action")
                 }) {
-                    Text("Delete last one")
+                    Image(systemName:"x.circle")
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background(
@@ -100,7 +83,12 @@ struct WaterAmountControl: View {
                         .scaleEffect(buttonUndoPressed ? 0.9 : 1.0)
                 }
                 .buttonStyle(PlainButtonStyle())
+                
             }
+            Text("Add a water intake amount")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
             .padding()
             
             
