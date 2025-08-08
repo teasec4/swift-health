@@ -3,6 +3,7 @@ import SwiftUI
 struct NotificationSettingsView: View {
     @ObservedObject var healthKitManager: HealthKitManager
     @ObservedObject var waterIntakeManager: WaterIntakeManager
+    @ObservedObject var notificationManager: NotificationManager
     @State private var selectedStepGoal: Int
     @State private var selectedWaterGoal: Int
     @State private var tempNotificationsEnabled: Bool
@@ -14,10 +15,12 @@ struct NotificationSettingsView: View {
     
     init(
         healthKitManager: HealthKitManager,
-        waterIntakeManager: WaterIntakeManager
+        waterIntakeManager: WaterIntakeManager,
+        notificationManager: NotificationManager
     ) {
         self.healthKitManager = healthKitManager
         self.waterIntakeManager = waterIntakeManager
+        self.notificationManager = notificationManager
         _selectedStepGoal = State(initialValue: Int(healthKitManager.stepGoal))
         _selectedWaterGoal = State(
             initialValue: Int(waterIntakeManager.waterGoal)
@@ -26,6 +29,7 @@ struct NotificationSettingsView: View {
             initialValue: NotificationManager.shared.notificationsEnabled
         )
         _tempMode = State(initialValue: NotificationManager.shared.mode)
+        
     }
     
     var body: some View {
@@ -34,13 +38,12 @@ struct NotificationSettingsView: View {
                 VStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 15){
                         Text("Goals")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal)
-                        HStack{
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        VStack{
                             // Step Goal Picker
                             GoalPickerCard(
-                                title: "Step",
+                                title: "Steps",
                                 range: Array(
                                     stride(from: 1000, through: 100000, by: 500)
                                 ),
@@ -50,6 +53,8 @@ struct NotificationSettingsView: View {
                                     selectedStepGoal = newGoal
                                 }
                             )
+                            Divider()
+                            
                             // Water Goal Picker
                             GoalPickerCard(
                                 title: "Water",
@@ -62,18 +67,20 @@ struct NotificationSettingsView: View {
                                     selectedWaterGoal = newGoal
                                 }
                             )
+                            
                         }
                         .padding()
                         .background(.ultraThinMaterial)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
+                        
+                    
                     }
                     
                     
                     VStack(alignment: .leading, spacing: 15){
                         Text("Remainder")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                         // Notification Settings
                         NotificationSettingsCard(
                             notificationManager: NotificationManager.shared,
@@ -94,6 +101,49 @@ struct NotificationSettingsView: View {
                                 isSuccessToast = false
                             }
                         )
+                        
+                        
+                        if tempNotificationsEnabled {
+                            Text("Planing your notifications")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            HStack {
+                                Text("Notification Frequency: ")
+                                    .font(.subheadline)
+                                Spacer()
+                                NotificationModePicker(selectedMode: $tempMode)
+                            }
+                            .padding()
+                            .background(.ultraThinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                        }
+                        
+                        Text("System Settings")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        HStack{
+                            Button {
+                                print("Button tapped: Attempting to open system settings")
+                                notificationManager.openAppSettings()
+                            } label: {
+                                Label("Open System Settings", systemImage: "gear")
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .foregroundColor(.blue)
+                            .padding()
+                            
+                            Spacer()
+                        }
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        
+                        
+                        Text("Notification well be used to remind you about your tasks")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                        
                     }
                     
                     
@@ -191,7 +241,8 @@ struct NotificationSettingsView: View {
     
     NotificationSettingsView(
         healthKitManager: HealthKitManager(),
-        waterIntakeManager: WaterIntakeManager()
+        waterIntakeManager: WaterIntakeManager(),
+        notificationManager: NotificationManager.shared
         
     )
 }

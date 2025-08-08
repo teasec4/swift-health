@@ -21,7 +21,7 @@ struct HealthV3App: App {
                 .environmentObject(waterIntakeManager)
                 .environmentObject(healthKitManager)
                 .environmentObject(notificationManager)
-                .preferredColorScheme(.light)
+//                .preferredColorScheme(.light)
         }
     }
 }

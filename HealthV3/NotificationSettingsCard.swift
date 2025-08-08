@@ -47,30 +47,19 @@ struct NotificationSettingsCard: View {
                     }
                 }
             
-            if tempNotificationsEnabled {
-                HStack(spacing: 16) {
-                    Text("Notification Frequency: ")
-                        .font(.subheadline)
-                        
-
-                    NotificationModePicker(selectedMode: $tempMode)
-                }
-            }
+//            if tempNotificationsEnabled {
+//                HStack(spacing: 16) {
+//                    Text("Notification Frequency: ")
+//                        .font(.subheadline)
+//                    
+//                    NotificationModePicker(selectedMode: $tempMode)
+//                }
+//            }
             
             if isCheckingPermissions {
                 ProgressView()
                     .padding(.vertical, 8)
             }
-
-            Divider()
-
-            Button {
-                print("Button tapped: Attempting to open system settings")
-                notificationManager.openAppSettings()
-            } label: {
-                Label("Open System Settings", systemImage: "gear")
-            }
-            .foregroundColor(.blue)
 
             
         }

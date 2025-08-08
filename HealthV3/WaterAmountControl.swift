@@ -75,6 +75,7 @@ struct WaterAmountControl: View {
                     Image(systemName:"x.circle")
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
+                        .foregroundStyle(.black)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
                                 .fill(.white)

@@ -8,29 +8,21 @@ struct GoalPickerCard: View {
     let onSet: (Int) -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
+        HStack{
             Text("\(title)")
-                .font(.caption)
-            
-            Picker("Select", selection: $selectedValue) {
+                
+            Spacer()
+//            Image(systemName: "trophy")
+            Picker("", selection: $selectedValue) {
                 ForEach(range, id: \.self) { value in
                     Text("\(value)").tag(value)
                 }
             }
-            .pickerStyle(.wheel)
-            
-            .frame(height: 100)
-            
-            .clipped()
+            .pickerStyle(.menu)
             .onChange(of: selectedValue, perform: onSet)
         }
         
     }
 }
 
-#Preview {
-    NotificationSettingsView(
-        healthKitManager: HealthKitManager(),
-        waterIntakeManager: WaterIntakeManager()
-    )
-}
+

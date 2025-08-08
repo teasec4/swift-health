@@ -47,7 +47,7 @@ struct ContentView: View {
             NavigationStack{
                 NotificationSettingsView(
                     healthKitManager: healthKitManager,
-                    waterIntakeManager: waterIntakeManager
+                    waterIntakeManager: waterIntakeManager, notificationManager: notificationManager
                 )
             }
             .tabItem{
